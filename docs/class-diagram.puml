@@ -1,0 +1,261 @@
+@startuml class-diagram
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide empty members
+
+legend top left
+  |= Колір |= Патерн |
+  |<#FFE0B2>| Strategy |
+  |<#C8E6C9>| Decorator |
+  |<#BBDEFB>| State |
+  |<#F8BBD0>| Facade |
+  |<#D1C4E9>| Observer |
+  |<#FFF59D>| Factory Method |
+  |<#B2EBF2>| Adapter |
+  |<#DCEDC8>| Builder |
+  |<#FFCCBC>| Composite |
+  |<#CFD8DC>| Template Method |
+endlegend
+
+package "Домен" {
+  class User {
+  id
+  email
+  fullName
+  phone
+  photoUrl
+  role
+  loyaltyTier
+  bonusPoints
+  preferences
+  }
+  class SportsCenter {
+  name
+  city
+  address
+}
+  class Hall {
+  name
+  capacity
+  pricePerHour
+  openHour
+  closeHour
+}
+  class Sport {
+  name
+  slug
+  premiumIncluded
+}
+  class Trainer {
+  fullName
+  experienceYears
+}
+  class Section {
+  name
+  level
+  ageGroup
+  capacity
+  pricePerVisit
+}
+  class SectionSession {
+  startsAt
+  durationMin
+}
+  class Booking {
+  kind
+  startsAt
+  endsAt
+  basePrice
+  finalPrice
+  status
+  bonusSpent
+  bonusAwarded
+}
+  class Membership {
+  type
+  visitsLeft
+  validTo
+  status
+}
+  class Payment {
+  purpose
+  amount
+  transactionId
+  status
+}
+  class Notification {
+  type
+  title
+  body
+  read
+}
+  class Promotion {
+  title
+  description
+  validTo
+}
+}
+
+SportsCenter "1" *-- "*" Hall
+Hall "*" --> "0..1" Sport
+Section "*" --> "1" Hall
+Section "*" --> "1" Sport
+Section "*" --> "0..1" Trainer
+Section "1" *-- "*" SectionSession
+Booking "*" --> "1" User
+Booking "*" --> "0..1" SectionSession
+Booking "*" --> "0..1" Hall
+Booking "*" --> "0..1" Membership
+Membership "*" --> "1" User
+Payment "*" --> "1" User
+Notification "*" --> "1" User
+
+class BookingFacade #F8BBD0 {
+  +quote(userId, dto)
+  +create(userId, dto)
+  +pay(userId, id, card)
+  +cancel(userId, id)
+}
+
+abstract class BookingState #BBDEFB {
+  +pay(b)
+  +cancel(b)
+  +complete(b)
+  +actions(b)
+}
+class PendingState #BBDEFB
+class ConfirmedState #BBDEFB
+class CompletedState #BBDEFB
+class CancelledState #BBDEFB
+BookingState <|-- PendingState
+BookingState <|-- ConfirmedState
+BookingState <|-- CompletedState
+BookingState <|-- CancelledState
+class BookingStateMachine #BBDEFB {
+  +apply(b, action)
+}
+BookingStateMachine --> BookingState
+
+interface PriceComponent #C8E6C9 {
+  +calculate(ctx)
+}
+class BasePrice #C8E6C9
+abstract class PriceDecorator #C8E6C9
+class PeakHourSurcharge #C8E6C9
+class MembershipCoverage #C8E6C9
+class LoyaltyDiscount #C8E6C9
+class BonusRedemption #C8E6C9
+PriceComponent <|.. BasePrice
+PriceComponent <|.. PriceDecorator
+PriceDecorator o--> PriceComponent : inner
+PriceDecorator <|-- PeakHourSurcharge
+PriceDecorator <|-- MembershipCoverage
+PriceDecorator <|-- LoyaltyDiscount
+PriceDecorator <|-- BonusRedemption
+
+interface LoyaltyStrategy #FFE0B2 {
+  +discountPercent(ctx)
+  +isFree(ctx)
+  +bonusPoints(amount)
+}
+class StandardLoyalty #FFE0B2
+class PremiumLoyalty #FFE0B2
+class CorporateLoyalty #FFE0B2
+LoyaltyStrategy <|.. StandardLoyalty
+LoyaltyStrategy <|.. PremiumLoyalty
+LoyaltyStrategy <|.. CorporateLoyalty
+LoyaltyDiscount ..> LoyaltyStrategy
+
+class DomainEventPublisher #D1C4E9 {
+  +subscribe(types, listener)
+  +publish(event)
+}
+interface DomainEventListener #D1C4E9 {
+  +handle(event)
+}
+class LoyaltyService #D1C4E9
+class NotificationsService #D1C4E9
+DomainEventPublisher o--> "*" DomainEventListener
+DomainEventListener <|.. LoyaltyService
+DomainEventListener <|.. NotificationsService
+LoyaltyService --> LoyaltyStrategy
+
+abstract class MembershipFactory #FFF59D {
+  #createPlan()
+  +issue(userId, now)
+}
+class SingleVisitFactory #FFF59D
+class MonthlyFactory #FFF59D
+class CorporateFactory #FFF59D
+MembershipFactory <|-- SingleVisitFactory
+MembershipFactory <|-- MonthlyFactory
+MembershipFactory <|-- CorporateFactory
+class MembershipsService
+MembershipsService --> MembershipFactory
+MembershipFactory ..> Membership : creates
+
+interface PaymentGateway #B2EBF2 {
+  +charge()
+  +refund()
+}
+class FakeBankAdapter #B2EBF2
+class FakeBankSdk #B2EBF2 {
+  +createCharge()
+  +refundCharge()
+}
+PaymentGateway <|.. FakeBankAdapter
+FakeBankAdapter --> FakeBankSdk
+class PaymentsService
+PaymentsService --> PaymentGateway
+PaymentsService ..> Payment
+
+class SectionQueryBuilder #DCEDC8 {
+  +sport()
+  +level()
+  +ageGroup()
+  +center()
+  +search()
+  +build()
+}
+class CatalogService
+CatalogService --> SectionQueryBuilder
+
+interface CatalogComponent #FFCCBC {
+  +sectionCount()
+  +capacity()
+  +minPrice()
+}
+class CatalogGroup #FFCCBC
+class SectionLeaf #FFCCBC
+CatalogComponent <|.. CatalogGroup
+CatalogComponent <|.. SectionLeaf
+CatalogGroup o--> "*" CatalogComponent
+CatalogService ..> CatalogComponent
+
+abstract class NotificationTemplate #CFD8DC {
+  +render(data, user)
+  #title()
+  #content()
+  #footer()
+}
+class BookingConfirmedTemplate #CFD8DC
+class BookingReminderTemplate #CFD8DC
+class BonusAccruedTemplate #CFD8DC
+class PromotionTemplate #CFD8DC
+NotificationTemplate <|-- BookingConfirmedTemplate
+NotificationTemplate <|-- BookingReminderTemplate
+NotificationTemplate <|-- BonusAccruedTemplate
+NotificationTemplate <|-- PromotionTemplate
+NotificationsService --> NotificationTemplate
+NotificationsService ..> Notification
+
+BookingFacade --> CatalogService
+BookingFacade --> PriceComponent
+BookingFacade --> BookingStateMachine
+BookingFacade --> LoyaltyService
+BookingFacade --> MembershipsService
+BookingFacade --> PaymentsService
+BookingFacade --> DomainEventPublisher
+BookingFacade ..> Booking
+@enduml

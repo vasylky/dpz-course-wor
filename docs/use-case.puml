@@ -1,0 +1,69 @@
+@startuml use-case
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+actor "Гість" as Guest
+actor "Клієнт" as Client
+actor "Адміністратор" as Admin
+actor "Платіжний шлюз" as Bank
+actor "Планувальник" as Cron
+
+Guest <|-- Client
+
+rectangle "Арена" {
+  usecase "Переглянути каталог секцій і залів" as UC1
+  usecase "Фільтрувати за видом спорту,\nрівнем, віком, центром" as UC2
+  usecase "Переглянути мережу центрів і тренерів" as UC3
+  usecase "Зареєструватися / увійти" as UC4
+  usecase "Забронювати місце в секції" as UC5
+  usecase "Орендувати зал" as UC6
+  usecase "Розрахувати вартість" as UC7
+  usecase "Оплатити бронювання" as UC8
+  usecase "Скасувати бронювання" as UC9
+  usecase "Переглянути історію бронювань" as UC10
+  usecase "Редагувати профіль і вподобання" as UC11
+  usecase "Купити абонемент" as UC12
+  usecase "Оформити картку лояльності" as UC13
+  usecase "Списати бонуси" as UC14
+  usecase "Переглянути сповіщення" as UC15
+  usecase "Керувати центрами, залами,\nтренерами, секціями" as UC16
+  usecase "Формувати розклад" as UC17
+  usecase "Створити акцію" as UC18
+  usecase "Керувати користувачами і картками" as UC19
+  usecase "Переглянути статистику" as UC20
+  usecase "Надіслати нагадування" as UC21
+  usecase "Завершити / скасувати прострочені" as UC22
+}
+
+Guest --> UC1
+Guest --> UC3
+Guest --> UC4
+UC1 <.. UC2 : <<extend>>
+
+Client --> UC5
+Client --> UC6
+Client --> UC9
+Client --> UC10
+Client --> UC11
+Client --> UC12
+Client --> UC13
+Client --> UC15
+UC5 ..> UC7 : <<include>>
+UC6 ..> UC7 : <<include>>
+UC7 <.. UC14 : <<extend>>
+UC5 <.. UC8 : <<extend>>
+UC6 <.. UC8 : <<extend>>
+UC8 --> Bank
+UC12 --> Bank
+UC13 --> Bank
+
+Admin --> UC16
+Admin --> UC17
+Admin --> UC18
+Admin --> UC19
+Admin --> UC20
+
+Cron --> UC21
+Cron --> UC22
+@enduml
