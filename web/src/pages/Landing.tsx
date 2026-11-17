@@ -1,6 +1,8 @@
+import { Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import { api, type Center, type LoyaltyCard, type Promotion, type Sport, type Trainer } from '../api';
 import { useAuth } from '../auth';
+import { CountUp, Tilt } from '../components/fx';
 import { useLoad } from '../components/ui';
 import { centerImage, fmtDate, money, sportImage } from '../labels';
 
@@ -14,6 +16,9 @@ const FEATURES = [
   { title: 'Нагадування', text: 'Сповіщення перед тренуванням, про нові секції та акції у вашому кабінеті.' },
   { title: 'Професійні тренери', text: 'Тренери з досвідом від 4 до 11 років для дітей, дорослих і груп 55+.' },
 ];
+
+const HERO_WORDS = ['Тренуйтеся', 'там,', 'де', 'зручно,', 'і', 'тоді,', 'коли', 'зручно'];
+const MARQUEE = ['Футбол', 'Йога', 'Фітнес', 'Плавання', 'Бокс', 'Пілатес', 'Функціональний тренінг', 'Оренда залів'];
 
 const STEPS = [
   ['Оберіть заняття', 'Фільтруйте секції за видом спорту, рівнем і віком або оберіть зал.'],
@@ -35,21 +40,41 @@ export default function Landing() {
       <section className="landing-hero" style={{ backgroundImage: 'url(/img/hero.jpg)' }}>
         <div className="container hero-content">
           <p className="eyebrow">Мережа спортивних центрів</p>
-          <h1>Тренуйтеся там, де зручно, і тоді, коли зручно</h1>
+          <h1 className="hero-title">
+            {HERO_WORDS.map((w, i) => (
+              <Fragment key={i}><span className="word" style={{ animationDelay: `${120 + i * 70}ms` }}>{w}</span>{' '}</Fragment>
+            ))}
+          </h1>
           <p className="lead">Футбол, йога, фітнес, плавання та бокс у центрах Львова і Києва. Бронюйте заняття із тренером або орендуйте зал онлайн.</p>
           <div className="hero-actions">
             <Link to="/catalog" className="btn primary big">Обрати секцію</Link>
             <Link to="/catalog?tab=halls" className="btn ghost big">Орендувати зал</Link>
           </div>
         </div>
+        <div className="hero-badges" aria-hidden="true">
+          <div className="hero-badge b1"><b>-10%</b><span>з Преміум-карткою</span></div>
+          <div className="hero-badge b2"><b>+5%</b><span>бонусами за тренування</span></div>
+          <div className="hero-badge b3"><b>24/7</b><span>онлайн-бронювання</span></div>
+        </div>
+        <div className="scroll-cue" aria-hidden="true"><span /></div>
       </section>
+
+      <div className="marquee" aria-hidden="true">
+        <div className="marquee-track">
+          {[0, 1].map((k) => (
+            <div key={k}>
+              {MARQUEE.map((m) => <span key={m}>{m}</span>)}
+            </div>
+          ))}
+        </div>
+      </div>
 
       <div className="container">
         <section className="stats-strip" data-testid="landing-stats">
-          <div><strong>{structure.data?.children.length ?? '–'}</strong><span>центри</span></div>
-          <div><strong>{structure.data?.sectionCount ?? '–'}</strong><span>секцій</span></div>
-          <div><strong>{trainers.data?.length ?? '–'}</strong><span>тренерів</span></div>
-          <div><strong>{structure.data?.minPrice ? money(structure.data.minPrice) : '–'}</strong><span>заняття від</span></div>
+          <div className="stat-cell"><strong>{structure.data ? <CountUp value={structure.data.children.length} /> : '–'}</strong><span>центри</span></div>
+          <div className="stat-cell"><strong>{structure.data ? <CountUp value={structure.data.sectionCount} /> : '–'}</strong><span>секцій</span></div>
+          <div className="stat-cell"><strong>{trainers.data ? <CountUp value={trainers.data.length} /> : '–'}</strong><span>тренерів</span></div>
+          <div className="stat-cell"><strong>{structure.data?.minPrice ? <CountUp value={structure.data.minPrice} format={money} /> : '–'}</strong><span>заняття від</span></div>
         </section>
 
         <section className="block">
@@ -58,22 +83,31 @@ export default function Landing() {
             <Link to="/catalog">Усі секції</Link>
           </div>
           <div className="sport-grid">
-            {sports.data?.map((s) => (
-              <Link key={s.id} to={`/catalog?sport=${s.slug}`} className="sport-tile" style={{ backgroundImage: `url(${sportImage(s.slug)})` }}>
-                <span>{s.name}</span>
-                {s.premiumIncluded && <em>Безкоштовно з Преміум</em>}
-              </Link>
+            {sports.data?.map((s, i) => (
+              <Tilt key={s.id} className="tile-wrap">
+                <Link to={`/catalog?sport=${s.slug}`} className="sport-tile">
+                  <i className="tile-bg" style={{ backgroundImage: `url(${sportImage(s.slug)})` }} />
+                  <small className="tile-num">{String(i + 1).padStart(2, '0')}</small>
+                  <span>{s.name}</span>
+                  {s.premiumIncluded && <em>Безкоштовно з Преміум</em>}
+                  <b className="tile-go">Переглянути секції</b>
+                </Link>
+              </Tilt>
             ))}
           </div>
         </section>
 
         <section className="block split">
-          <img src="/img/group.jpg" alt="Групове заняття" className="split-img" />
+          <div className="split-media">
+            <img src="/img/group.jpg" alt="Групове заняття" className="split-img" />
+            <div className="split-float"><b>{trainers.data?.length ?? 6}</b><span>тренерів із досвідом від 4 років</span></div>
+          </div>
           <div>
             <h2>Чому Арена</h2>
             <div className="features">
               {FEATURES.map((f) => (
                 <div key={f.title} className="feature">
+                  <span className="feature-num">{String(FEATURES.indexOf(f) + 1).padStart(2, '0')}</span>
                   <h3>{f.title}</h3>
                   <p>{f.text}</p>
                 </div>
@@ -84,7 +118,7 @@ export default function Landing() {
 
         <section className="block">
           <h2>Як це працює</h2>
-          <div className="steps">
+          <div className="steps steps-line">
             {STEPS.map(([title, text], i) => (
               <div key={title} className="step">
                 <span className="step-num">{i + 1}</span>
