@@ -1,0 +1,47 @@
+@startuml
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam componentStyle rectangle
+skinparam rectangle {
+  BorderColor #2F6B57
+}
+actor "Користувач" as U
+node "Браузер" {
+  [React SPA\n(Vite, React Router)] as SPA
+}
+node "Docker: app (Node 22)" {
+  [ServeStatic\n/ та /uploads] as STATIC
+  package "NestJS /api" {
+    [AuthModule\nJWT, ролі] as AUTH
+    [CatalogModule\nBuilder, Composite] as CAT
+    [BookingsModule\nFacade, Decorator, State] as BOOK
+    [PaymentsModule\nAdapter] as PAY
+    [MembershipsModule\nFactory Method] as MEM
+    [LoyaltyModule\nStrategy, Observer] as LOY
+    [NotificationsModule\nTemplate Method, Observer] as NOTI
+    [AdminModule] as ADM
+    [EventsModule\nDomainEventPublisher] as EV
+    [BookingScheduler\ncron] as CRON
+  }
+  [FakeBankSdk] as BANK
+}
+database "Docker: PostgreSQL 16" as DB
+U --> SPA
+SPA --> STATIC : HTML, JS, фото
+SPA --> AUTH : REST + JWT
+SPA --> CAT
+SPA --> BOOK
+SPA --> ADM
+BOOK --> PAY
+BOOK --> MEM
+BOOK --> LOY
+BOOK --> EV : publish
+EV --> LOY : booking.confirmed
+EV --> NOTI : усі події
+CRON --> BOOK
+PAY --> BANK
+ADM --> EV : section.created\npromotion.created
+CAT --> DB
+BOOK --> DB
+NOTI --> DB
+@enduml

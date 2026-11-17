@@ -1,0 +1,33 @@
+@startuml
+skinparam shadowing false
+skinparam defaultFontName Arial
+actor Клієнт
+participant "BookingsController" as C
+participant "BookingFacade" as F
+participant "PriceComponent\n(Decorator chain)" as P
+participant "BookingStateMachine" as S
+participant "PaymentsService\n+ FakeBankAdapter" as PAY
+participant "DomainEventPublisher" as E
+participant "LoyaltyService" as L
+participant "NotificationsService" as N
+database Postgres
+Клієнт -> C : POST /api/bookings
+C -> F : create(userId, dto)
+F -> F : resolveSlot (місця, перетини)
+F -> P : calculate(ctx)
+P --> F : total, lines, bonusSpent
+F -> Postgres : save(status = pending)
+F -> E : booking.created
+E -> N : "Бронювання створено"
+Клієнт -> C : POST /api/bookings/:id/pay
+C -> F : pay(id, card)
+F -> PAY : charge(amount, card)
+PAY --> F : success / 402
+F -> S : apply(booking, 'pay')
+S --> F : confirmed
+F -> Postgres : save
+F -> E : booking.confirmed
+E -> L : нарахувати бонуси
+L -> E : bonus.accrued
+E -> N : "Підтверджено", "Нараховано бали"
+@enduml

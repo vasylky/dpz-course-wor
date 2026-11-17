@@ -1,0 +1,144 @@
+@startuml
+hide circle
+skinparam linetype ortho
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #2F6B57
+  HeaderBackgroundColor #E3F0EA
+}
+entity users {
+  * id : int
+  --
+  email : varchar
+  passwordHash : varchar
+  fullName : varchar
+  phone : varchar
+  photoUrl : varchar
+  preferences : jsonb
+  role : enum
+  loyaltyTier : enum
+  bonusPoints : int
+  companyName : varchar
+}
+entity sports {
+  * id : int
+  --
+  name : varchar
+  slug : varchar
+  premiumIncluded : bool
+}
+entity sports_centers {
+  * id : int
+  --
+  name : varchar
+  city : varchar
+  address : varchar
+}
+entity halls {
+  * id : int
+  --
+  centerId : FK
+  sportId : FK
+  name : varchar
+  capacity : int
+  pricePerHour : numeric
+  openHour : int
+  closeHour : int
+}
+entity trainers {
+  * id : int
+  --
+  sportId : FK
+  fullName : varchar
+  experienceYears : int
+}
+entity sections {
+  * id : int
+  --
+  sportId : FK
+  hallId : FK
+  trainerId : FK
+  name : varchar
+  level : enum
+  ageGroup : enum
+  capacity : int
+  pricePerVisit : numeric
+  active : bool
+}
+entity section_sessions {
+  * id : int
+  --
+  sectionId : FK
+  startsAt : timestamptz
+  durationMin : int
+}
+entity bookings {
+  * id : int
+  --
+  userId : FK
+  hallId : FK
+  sessionId : FK
+  membershipId : FK
+  kind : enum
+  startsAt : timestamptz
+  endsAt : timestamptz
+  basePrice : numeric
+  finalPrice : numeric
+  priceLines : jsonb
+  bonusSpent : int
+  bonusAwarded : int
+  status : enum
+}
+entity memberships {
+  * id : int
+  --
+  userId : FK
+  type : enum
+  visitsLeft : int
+  validFrom : timestamptz
+  validTo : timestamptz
+  status : enum
+}
+entity payments {
+  * id : int
+  --
+  userId : FK
+  purpose : enum
+  referenceId : int
+  amount : numeric
+  transactionId : varchar
+  status : enum
+}
+entity notifications {
+  * id : int
+  --
+  userId : FK
+  type : varchar
+  title : varchar
+  body : text
+  read : bool
+}
+entity promotions {
+  * id : int
+  --
+  title : varchar
+  description : text
+  validTo : timestamptz
+}
+sports_centers ||--o{ halls
+sports |o--o{ halls
+sports ||--o{ sections
+sports |o--o{ trainers
+halls ||--o{ sections
+trainers |o--o{ sections
+sections ||--o{ section_sessions
+users ||--o{ bookings
+halls |o--o{ bookings
+section_sessions |o--o{ bookings
+memberships |o--o{ bookings
+users ||--o{ memberships
+users ||--o{ payments
+users ||--o{ notifications
+@enduml
